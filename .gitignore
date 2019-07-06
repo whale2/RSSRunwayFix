@@ -1,0 +1,12 @@
+*~
+*.userprefs
+WorldStabilizer.userprefs
+WorldStabilizer/WorldStabilizer/bin
+WorldStabilizer/WorldStabilizer/obj
+.idea
+.vs
+*.zip
+obj
+*/obj
+bin
+*/bin

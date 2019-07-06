@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2019 Nikita Makeev
+Copyright (c) 2017 Nikita Makeev
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,21 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+
+Also, parts of this code are inspired by Vessel Mover; Its license is provided below:
+
+
+=======================================================
+
+
+This KSP Addon is distributed under the MIT license.
+
+https://opensource.org/licenses/MIT
+
+Original Author: Paolo Encarnacion (BahamutoD)
+Current Author:  Joe Korinek (Papa_Joe)
+Original Source: https://github.com/BahamutoD/VesselMover
+Current Source: https://github.com/PapaJoesSoup/VesselMover
+
+Vessel spawner code is a modified version of SpawnVessel by nightingale (Contract Configurator)
