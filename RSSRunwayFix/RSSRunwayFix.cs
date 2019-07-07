@@ -29,6 +29,10 @@ namespace RSSRunwayFix
 		private int frameSkip = 0;
 		private bool rwy = false;
 
+		private bool waiting = false;
+		private IEnumerator waitCoro = null;
+		private bool coroComplete = false;
+
 		private Vector3 down;
 
 		private string[] collidersToFix =
@@ -87,13 +91,16 @@ namespace RSSRunwayFix
 			GameObject end09 = GameObject.Find(collidersToFix[0]);
 			if (end09 == null)
 			{
+				printDebug("no end09 found");
 				hold = false;
 				return;
 			}
 
-			combine(end09.transform.parent.gameObject);
+			//combine(end09.transform.parent.gameObject);
+			disableColliders();
 			getDownwardVector();
 			hold = true;
+			waiting = false;
 		}
 
 		public void onVesselSwitching(Vessel from, Vessel to) {
@@ -103,6 +110,7 @@ namespace RSSRunwayFix
 			}
 
 			getDownwardVector();
+			waiting = false;
 		}
 
 		private void getDownwardVector()
@@ -113,31 +121,59 @@ namespace RSSRunwayFix
 
 		public void onVesselSituationChange(GameEvents.HostedFromToAction<Vessel, Vessel.Situations> data)
 		{
-			hold = data.to == Vessel.Situations.LANDED && data.host == FlightGlobals.ActiveVessel;
+			if (data.host != FlightGlobals.ActiveVessel)
+			{
+				return;
+			}
+
 			
+			hold = data.to == Vessel.Situations.LANDED;
 			printDebug($"vessel: {data.host.vesselName}, situation: {data.to}, hold: {hold}");
-			StartCoroutine(restoreThreshold());
+
+			if (!hold && FloatingOrigin.fetch.threshold > originalThreshold && originalThreshold > 0)
+			{
+				printDebug($"coro: {waitCoro}, complete: {coroComplete}");
+				if (waitCoro != null && !coroComplete)
+				{
+					printDebug("stopping coro");
+					StopCoroutine(waitCoro);
+				}
+
+				waitCoro = restoreThreshold();
+				printDebug($"created new coro: {waitCoro}");
+
+				coroComplete = false;
+				StartCoroutine(waitCoro);
+			}
 		}
 
 		private IEnumerator restoreThreshold()
 		{
-			while (!hold && FlightGlobals.ActiveVessel.radarAltitude < 3f)
+			printDebug($"in coro; hold={hold}, waiting={waiting}, alt={FlightGlobals.ActiveVessel.radarAltitude}");
+			while (!hold && !waiting &&  FlightGlobals.ActiveVessel.radarAltitude < 10)
 			{
-				yield return new WaitForSeconds(1);
+				printDebug($"radar alt: {FlightGlobals.ActiveVessel.radarAltitude}, waiting 5 sec");
+				waiting = true;
+				yield return new WaitForSeconds(5);
+				waiting = false;
+				printDebug("waiting is over");
 			}
-			
-			if (!hold && FloatingOrigin.fetch.threshold > originalThreshold && originalThreshold > 0)
-			{
-				printDebug($"Restoring original thresholds ({FloatingOrigin.fetch.threshold} > {originalThreshold})");
+
+			// Check again as situation could have changed
+			if (!hold && FloatingOrigin.fetch.threshold > originalThreshold && originalThreshold > 0) {
+				printDebug($"Restoring original thresholds ({FloatingOrigin.fetch.threshold} > {originalThreshold}), "+
+				           $"alt={FlightGlobals.ActiveVessel.radarAltitude}");
 				FloatingOrigin.fetch.threshold = originalThreshold;
 				FloatingOrigin.fetch.thresholdSqr = originalThresholdSqr;
 			}
+			printDebug("coro finished");
+			coroComplete = true;
 		}
 		
 		public void FixedUpdate()
 		{
 			frameSkip++;
-			if (frameSkip < 10)
+			if (frameSkip < 25)
 			{
 				return;
 			}
@@ -190,6 +226,7 @@ namespace RSSRunwayFix
 			}
 			
 			string colliderName = raycastHit.collider.gameObject.name;
+			//printDebug($"hit collider: {colliderName}");
 			if (colliderName != "runway_collider")
 			{
 				return false;
@@ -208,41 +245,31 @@ namespace RSSRunwayFix
 			print ("RSSSteamRoller: " + caller + ":" + line + ": " + message);
 		}
 
-
-		private void combine(GameObject parent)
+		private void disableColliders()
 		{
-			
-			MeshFilter[] meshFilters = new MeshFilter[collidersToFix.Length];
-
-			int i = 0;
 			foreach (string c in collidersToFix)
 			{
 				GameObject o = GameObject.Find(c);
-				if (!o.activeInHierarchy)
+				if (o == null)
 				{
+					printDebug($"Object {c} not found, skipping");
 					continue;
 				}
-				meshFilters[i] = o.GetComponentInChildren<MeshFilter>();
-			}
-			CombineInstance[] combine = new CombineInstance[meshFilters.Length];
+				if (!o.activeInHierarchy)
+				{
+					printDebug($"{o.name} is not active, skipping");
+					continue;
+				}
 
-			 
-			i = 0;
-			while (i < meshFilters.Length)
-			{
-				combine[i].mesh = meshFilters[i].sharedMesh;
-				combine[i].transform = meshFilters[i].transform.localToWorldMatrix;
-				meshFilters[i].gameObject.SetActive(false);
-
-				i++;
+				MeshCollider cl = o.GetComponentInChildren<MeshCollider>();
+				if (cl == null)
+				{
+					printDebug($"No mesh collider in {c}");
+					continue;
+				}
+				printDebug($"disabling {cl.name}");
+				cl.enabled = false;
 			}
-			
-			parent.transform.GetComponent<MeshFilter>().mesh = new Mesh();
-			parent.transform.GetComponent<MeshFilter>().mesh.CombineMeshes(combine);
-			parent.transform.gameObject.SetActive(true);
-			parent.GetComponent<Renderer>().material.CopyPropertiesFromMaterial(
-			parent.GetComponentInChildren<Renderer>().material);
 		}
-
 	}
 }
