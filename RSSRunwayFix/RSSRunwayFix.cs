@@ -49,8 +49,7 @@ namespace RSSRunwayFix
 			GameEvents.onVesselSwitching.Add (onVesselSwitching);
 			GameEvents.onVesselSituationChange.Add (onVesselSituationChange);
 			
-			//
-			GameEvents.onFloatingOriginShift.Add(onFloatingOriginShift);
+			//GameEvents.onFloatingOriginShift.Add(onFloatingOriginShift);
 		}
 
 		public void OnDestroy() {
@@ -58,8 +57,9 @@ namespace RSSRunwayFix
 			GameEvents.onVesselGoOffRails.Remove (onVesselGoOffRails);
 			GameEvents.onVesselGoOnRails.Remove (onVesselGoOnRails);
 			GameEvents.onVesselSwitching.Remove (onVesselSwitching);
-			GameEvents.onFloatingOriginShift.Remove(onFloatingOriginShift);
 			GameEvents.onVesselSituationChange.Remove(onVesselSituationChange);
+			
+			//GameEvents.onFloatingOriginShift.Remove(onFloatingOriginShift);
 		}
 
 		public void onFloatingOriginShift(Vector3d v0, Vector3d v1)
