@@ -47,7 +47,8 @@ for t in ${TARGETS}; do
     mv tmp.version GameData/${PROJECT}/$PROJECT.version
 
     # Build package
-    zip -r ${PACKAGE} GameData -x \*~\*
+    rm ${PACKAGE}
+    zip -r ${PACKAGE} RSSRunwayFix-LICENSE GameData -x \*~\*
     mv ${PACKAGE} ${SOURCE_DIR}
     cd ${SOURCE_DIR}
     rm -rf ${TMPDIR}
